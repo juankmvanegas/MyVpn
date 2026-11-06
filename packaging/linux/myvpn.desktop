@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=MyVpn
+Comment=Cliente SSL VPN con inicio de sesión único
+Exec=/opt/myvpn/MyVpn
+Icon=/opt/myvpn/myvpn.png
+Terminal=false
+Categories=Network;

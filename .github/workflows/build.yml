@@ -1,0 +1,86 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.26" }
+      - run: go vet ./internal/... ./cmd/...
+      - run: go test -race ./internal/... ./cmd/...
+      - name: Linux TUN integration (Docker)
+        run: ./scripts/test-linux-docker.sh
+
+  macos:
+    needs: test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.26" }
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - run: ./scripts/build-macos.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: "dist/*macos*" }
+
+  windows-build:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.26" }
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - run: sudo apt-get install -y zip
+      - run: ./scripts/build-windows.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: "dist/*windows*" }
+
+  windows-integration:
+    needs: windows-build
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.26" }
+      - uses: actions/download-artifact@v4
+        with: { name: windows, path: dist }
+      - shell: pwsh
+        run: ./scripts/windows-integration.ps1
+
+  linux:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: ARCHS=${{ matrix.arch }} ./scripts/build-linux.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: linux-${{ matrix.arch }}, path: "dist/*linux*" }
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows-integration, linux]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: "dist/*"
+          overwrite_files: true

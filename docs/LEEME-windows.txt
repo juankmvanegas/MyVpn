@@ -1,0 +1,14 @@
+MyVpn para Windows
+==================
+1. Descomprime esta carpeta en un lugar fijo (por ejemplo C:\Program Files\MyVpn o tu carpeta de usuario).
+2. Abre MyVpn.exe.
+3. La primera vez pulsa "Instalar": Windows pedirá permiso de administrador (UAC) para registrar
+   el servicio "MyVpn" (copia myvpnd.exe y wintun.dll a C:\Program Files\MyVpn).
+   Al abrir MyVpn aparece su icono junto al reloj (abajo a la derecha); si cierras la ventana,
+   el icono sigue ahí con las opciones Conectar / Desconectar / Abrir MyVpn / Salir.
+4. Crea tu conexión (botón +): nombre, gateway remoto y puerto que te indique tu empresa.
+5. Pulsa Conectar. Se abrirá el navegador para iniciar sesión (usuario, contraseña y doble factor).
+
+Requisitos: Windows 10/11 con Microsoft Edge WebView2 (incluido en Windows 11).
+Para quitarlo: en MyVpn > Servicio > Desinstalar servicio, y borra la carpeta.
+wintun.dll es software de WireGuard LLC (ver wintun-LICENSE.txt).

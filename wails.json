@@ -1,0 +1,17 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "MyVpn",
+  "outputfilename": "MyVpn",
+  "frontend:dir": "frontend",
+  "frontend:install": "",
+  "frontend:build": "",
+  "wailsjsdir": "./frontend",
+  "author": {"name": "MyVpn"},
+  "info": {
+    "companyName": "MyVpn",
+    "productName": "MyVpn",
+    "productVersion": "1.1.0",
+    "copyright": "MyVpn",
+    "comments": "Cliente SSL VPN ligero para FortiGate con SSO"
+  }
+}
