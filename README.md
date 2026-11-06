@@ -31,6 +31,8 @@ Instaladores en la página de **[Releases](../../releases/latest)**:
 ### Windows
 1. Descomprime el `.zip` en una carpeta fija y abre `MyVpn.exe`.
 2. Pulsa **Instalar** y acepta el aviso de administrador (UAC). Ver `LEEME.txt`.
+3. Si Windows 11 muestra *"El Control inteligente de aplicaciones bloqueó una aplicación"*, esa
+   versión no está firmada digitalmente: ver [docs/firma-windows.md](docs/firma-windows.md).
 
 ### Linux
 ```sh

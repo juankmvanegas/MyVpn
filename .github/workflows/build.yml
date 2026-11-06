@@ -51,11 +51,65 @@ jobs:
       - run: ./scripts/build-windows.sh
       - uses: actions/upload-artifact@v4
         with:
+          name: windows-unsigned
+          path: dist/*windows*
+
+  # Firma Authenticode (necesaria para Control inteligente de aplicaciones de
+  # Windows 11). Usa Azure Artifact Signing si los secretos están configurados;
+  # si no, publica los binarios sin firmar. Ver docs/firma-windows.md.
+  windows-sign:
+    needs: windows-build
+    runs-on: windows-2022
+    env:
+      SIGNING_CONFIGURED: ${{ secrets.AZURE_CLIENT_ID != '' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-unsigned
+          path: unsigned
+      - name: Descomprimir
+        shell: pwsh
+        run: |
+          Get-ChildItem unsigned\*.zip | ForEach-Object {
+            Expand-Archive $_.FullName -DestinationPath ("stage\" + $_.BaseName)
+          }
+      - name: Firmar con Azure Artifact Signing
+        if: env.SIGNING_CONFIGURED == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_CERT_PROFILE }}
+          files-folder: ${{ github.workspace }}\stage
+          files-folder-filter: exe
+          files-folder-recurse: true
+          file-digest: SHA256
+          timestamp-digest: SHA256
+          description: MyVpn
+          description-url: https://github.com/${{ github.repository }}
+      - name: Verificar firmas y volver a empaquetar
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          foreach ($d in Get-ChildItem stage -Directory) {
+            foreach ($exe in Get-ChildItem $d.FullName -Filter *.exe) {
+              $sig = Get-AuthenticodeSignature $exe.FullName
+              "{0}\{1}: {2} {3}" -f $d.Name, $exe.Name, $sig.Status, $sig.SignerCertificate.Subject
+              if ($env:SIGNING_CONFIGURED -eq 'true' -and $sig.Status -ne 'Valid') { throw "firma inválida en $($exe.Name)" }
+            }
+            Compress-Archive -Path "$($d.FullName)\*" -DestinationPath "dist\$($d.Name).zip"
+          }
+          if ($env:SIGNING_CONFIGURED -ne 'true') { "::warning::Binarios de Windows SIN firmar: configura la firma (docs/firma-windows.md)" }
+      - uses: actions/upload-artifact@v4
+        with:
           name: windows
           path: dist/*windows*
 
   windows-integration:
-    needs: windows-build
+    needs: windows-sign
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -94,8 +148,18 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          name: macos
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: linux-*
           path: dist
           merge-multiple: true
+      - run: cd dist && sha256sum MyVpn-* > SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*

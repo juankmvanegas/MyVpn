@@ -9,6 +9,9 @@ MyVpn para Windows
 4. Crea tu conexión (botón +): nombre, gateway remoto y puerto que te indique tu empresa.
 5. Pulsa Conectar. Se abrirá el navegador para iniciar sesión (usuario, contraseña y doble factor).
 
+Si aparece "El Control inteligente de aplicaciones bloqueó una aplicación", esta copia no está
+firmada digitalmente; descarga una versión firmada de la página de Releases.
+
 Requisitos: Windows 10/11 con Microsoft Edge WebView2 (incluido en Windows 11).
 Para quitarlo: en MyVpn > Servicio > Desinstalar servicio, y borra la carpeta.
 wintun.dll es software de WireGuard LLC (ver wintun-LICENSE.txt).
