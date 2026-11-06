@@ -183,7 +183,10 @@ func connect(args []string) error {
 		defer cancel()
 		*cookie, err = forti.SAMLLogin(ctx, g, ssoPort, func(u string) error {
 			fmt.Println("Si el navegador no se abre, visita:\n  " + u)
-			return browser.Open(u)
+			if err := browser.Open(u); err != nil {
+				fmt.Println("(no se pudo abrir un navegador; abre la dirección anterior manualmente)")
+			}
+			return nil
 		})
 		if err != nil {
 			return err
